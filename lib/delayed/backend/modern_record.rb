@@ -12,11 +12,11 @@ module Delayed
         scope :max_priority, lambda { where("priority <= ?", Worker.max_priority) if Worker.max_priority }
         scope :for_queues, lambda { |queues = Worker.queues| where(queue: queues) if Array(queues).any? }
         scope :ready_to_run,
-              lambda { |worker_name, max_run_time|
+              lambda { |worker_name, max_run_time, now|
                 where(
                   "((run_at <= ? AND (locked_at IS NULL OR locked_at < ?)) OR locked_by = ?) AND failed_at IS NULL",
-                  db_time_now,
-                  db_time_now - max_run_time,
+                  now,
+                  now - max_run_time,
                   worker_name
                 )
               }
@@ -39,7 +39,7 @@ module Delayed
         def self.reserve(worker, max_run_time = Worker.max_run_time)
           now = db_time_now.change(usec: 0)
           count =
-            ready_to_run(worker.name, max_run_time)
+            ready_to_run(worker.name, max_run_time, db_time_now)
               .min_priority
               .max_priority
               .for_queues
