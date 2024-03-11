@@ -73,14 +73,12 @@ module Delayed
         def self.db_time_now
           if Time.zone
             Time.zone.now
-          elsif default_timezone == :utc
+          elsif ::ActiveRecord.default_timezone == :utc
             Time.now.utc
           else
             Time.now
           end
         end
-
-        def self.default_timezone = ::ActiveRecord.default_timezone
 
         def reload(*args)
           reset
