@@ -41,7 +41,7 @@ module Delayed
 
           now = db_time_now.change(usec: 0)
           count = ready_scope.limit(1).update_all(locked_at: now, locked_by: worker.name)
-          return nil if count == 0
+          return if count == 0
 
           where(locked_at: now, locked_by: worker.name, failed_at: nil).first
         end
