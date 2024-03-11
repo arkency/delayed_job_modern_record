@@ -29,25 +29,15 @@ module Delayed
           )
         end
 
-        def self.before_fork
-          ::ActiveRecord::Base.connection_handler.clear_all_connections!(:all)
-        end
-
-        def self.after_fork
-          ::ActiveRecord::Base.establish_connection
-        end
+        def self.before_fork = ::ActiveRecord::Base.connection_handler.clear_all_connections!(:all)
+        def self.after_fork = ::ActiveRecord::Base.establish_connection
 
         def self.clear_locks!(worker_name)
           where(locked_by: worker_name).update_all(locked_by: nil, locked_at: nil)
         end
 
         def self.reserve(worker, max_run_time = Worker.max_run_time)
-          ready_scope =
-            ready_to_run(worker.name, max_run_time)
-            .min_priority
-            .max_priority
-            .for_queues
-            .by_priority
+          ready_scope = ready_to_run(worker.name, max_run_time).min_priority.max_priority.for_queues.by_priority
 
           now = db_time_now.change(usec: 0)
           count = ready_scope.limit(1).update_all(locked_at: now, locked_by: worker.name)
