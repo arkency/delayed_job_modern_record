@@ -37,10 +37,15 @@ module Delayed
         end
 
         def self.reserve(worker, max_run_time = Worker.max_run_time)
-          ready_scope = ready_to_run(worker.name, max_run_time).min_priority.max_priority.for_queues.by_priority
-
           now = db_time_now.change(usec: 0)
-          count = ready_scope.limit(1).update_all(locked_at: now, locked_by: worker.name)
+          count =
+            ready_to_run(worker.name, max_run_time)
+              .min_priority
+              .max_priority
+              .for_queues
+              .by_priority
+              .limit(1)
+              .update_all(locked_at: now, locked_by: worker.name)
           return if count == 0
 
           where(locked_at: now, locked_by: worker.name, failed_at: nil).first
