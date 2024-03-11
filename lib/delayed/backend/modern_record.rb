@@ -11,6 +11,15 @@ module Delayed
         scope :min_priority, lambda { where("priority >= ?", Worker.min_priority) if Worker.min_priority }
         scope :max_priority, lambda { where("priority <= ?", Worker.max_priority) if Worker.max_priority }
         scope :for_queues, lambda { |queues = Worker.queues| where(queue: queues) if Array(queues).any? }
+        scope :ready_to_run,
+              lambda { |worker_name, max_run_time|
+                where(
+                  "((run_at <= ? AND (locked_at IS NULL OR locked_at < ?)) OR locked_by = ?) AND failed_at IS NULL",
+                  db_time_now,
+                  db_time_now - max_run_time,
+                  worker_name
+                )
+              }
 
         before_save :set_default_run_at
 
@@ -19,15 +28,6 @@ module Delayed
         end
 
         set_delayed_job_table_name
-
-        def self.ready_to_run(worker_name, max_run_time)
-          where(
-            "((run_at <= ? AND (locked_at IS NULL OR locked_at < ?)) OR locked_by = ?) AND failed_at IS NULL",
-            db_time_now,
-            db_time_now - max_run_time,
-            worker_name
-          )
-        end
 
         def self.before_fork = ::ActiveRecord::Base.connection_handler.clear_all_connections!(:all)
         def self.after_fork = ::ActiveRecord::Base.establish_connection
