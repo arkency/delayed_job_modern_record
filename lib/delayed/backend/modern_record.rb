@@ -49,18 +49,7 @@ module Delayed
             .for_queues
             .by_priority
 
-          reserve_with_scope(ready_scope, worker, db_time_now)
-        end
-
-        def self.reserve_with_scope(ready_scope, worker, now)
-          # Removing the millisecond precision from now(time object)
-          # MySQL 5.6.4 onwards millisecond precision exists, but the
-          # datetime object created doesn't have precision, so discarded
-          # while updating. But during the where clause, for mysql(>=5.6.4),
-          # it queries with precision as well. So removing the precision
-          now = now.change(usec: 0)
-          # This works on MySQL and possibly some other DBs that support
-          # UPDATE...LIMIT. It uses separate queries to lock and return the job
+          now = db_time_now.change(usec: 0)
           count = ready_scope.limit(1).update_all(locked_at: now, locked_by: worker.name)
           return nil if count == 0
 
