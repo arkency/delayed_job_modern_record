@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 Gem::Specification.new do |spec|
-  spec.name = "delayed_job_moden_record"
+  spec.name = "delayed_job_modern_record"
   spec.version = "0.0.1"
   spec.summary = "Modern ActiveRecord backend for DelayedJob"
   spec.description = "Modern ActiveRecord backend for Delayed::Job, originally authored by Tobias Lütke"
